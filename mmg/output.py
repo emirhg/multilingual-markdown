@@ -1,6 +1,7 @@
 from typing import List, Dict
 import os
 import json
+import yaml
 import markdown  # Markdown to HTML
 import nbconvert  # Jupyter Notebook to HTML
 import nbformat  # Dict to Jupyter Notebook
@@ -15,6 +16,11 @@ def save_md(path, md_doc: List[str]):
 def save_jn(path, jupyter_notebook: Dict):
     with open(path, "w", encoding="utf-8") as f:
         json.dump(jupyter_notebook, f, indent=2)
+
+
+def save_yml(path, yml_doc: Dict):
+    with open(path, "w", encoding="utf-8") as f:
+        yaml.dump(yml_doc, f, default_flow_style=False, allow_unicode=True)
 
 
 def save_html(path, html: str):
@@ -52,6 +58,8 @@ def handle_as_is(target_item: FileItem, content: any):
         save_md(target_item.norm_path, content)
     elif target_item.extension == "ipynb":
         save_jn(target_item.norm_path, content)
+    elif target_item.extension in ["yml", "yaml"]:
+        save_yml(target_item.norm_path, content)
 
 
 def handle_html_or_pdf(target_item: FileItem, input_format: str, css: str, content: any):

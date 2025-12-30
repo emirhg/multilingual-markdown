@@ -5,8 +5,8 @@ import time
 import json
 import click
 import yaml
-from mmg.api import convert_base_doc, convert_base_jupyter
-from mmg.config import Config, extract_config_from_md, extract_config_from_jupyter
+from mmg.api import convert_base_doc, convert_base_jupyter, convert_base_yml
+from mmg.config import Config, extract_config_from_md, extract_config_from_jupyter, extract_config_from_yml
 from mmg.health import HealthChecker
 from mmg.base_item import FileItem, collect_bases_from_dir, collect_bases_from_files
 from mmg.cli_log import log_info, log_warn, log_error, set_log_dir
@@ -59,6 +59,14 @@ def _process_file(item: FileItem) -> Tuple[FileItem, any, Config]:
             base_jn: Dict = json.load(f)
             cfg: Config = extract_config_from_jupyter(base_jn)
             return (item, base_jn, cfg)
+        elif item.extension in ["yml", "yaml"]:
+            base_yml: Dict = yaml.safe_load(f)
+            try:
+                cfg: Config = extract_config_from_yml(base_yml)
+            except BadConfigError as e:
+                log_error(f" => {repr(item)}: {e}")
+                sys.exit(1)
+            return (item, base_yml, cfg)
 
 
 def _health_check_on_backlogs(
@@ -322,18 +330,22 @@ def _convert_items(
     # ^^^^^^^^^^^^^^^^
     md_backlogs = []  # (item: FileItem, base_doc: List[str], cfg: Config)
     jn_backlogs = []  # (item: FileItem, base_jn: Dict, cfg: Config)
+    yml_backlogs = []  # (item: FileItem, base_yml: Dict, cfg: Config)
     for item in sorted(base_items, key=lambda x: x.abs_path):
         backlog = _process_file(item)
         if item.extension == "md":
             md_backlogs.append(backlog)
         elif item.extension == "ipynb":
             jn_backlogs.append(backlog)
+        elif item.extension in ["yml", "yaml"]:
+            yml_backlogs.append(backlog)
 
     # Health Check and Print Log
     # ^^^^^^^^^^^^^^^^^^^^^^^^^^
     log_info("----------------------")
     md_healthy = _health_check_on_backlogs(md_backlogs, "md", "📄", skip_validation, verbose)
     jn_healthy = _health_check_on_backlogs(jn_backlogs, "ipynb", "📒", skip_validation, verbose)
+    yml_healthy = _health_check_on_backlogs(yml_backlogs, "yml", "⚙️", skip_validation, verbose)
     log_info("----------------------")
     _msg = "s were" if is_plural else " was"
     log_info(f" => {base_count} base file{_msg} found.")
@@ -344,7 +356,7 @@ def _convert_items(
         if skip_validation:
             log_warn(" => No health check was performed.")
             sys.exit(0)
-        elif md_healthy and jn_healthy:
+        elif md_healthy and jn_healthy and yml_healthy:
             log_info(" => All files are healthy.", fg="green")
             sys.exit(0)
         else:
@@ -357,7 +369,7 @@ def _convert_items(
     # Convert
     # ^^^^^^^
     log_info("----------------------", fg="cyan")
-    for _backlogs, _convert_func in zip([md_backlogs, jn_backlogs], [convert_base_doc, convert_base_jupyter]):
+    for _backlogs, _convert_func in zip([md_backlogs, jn_backlogs, yml_backlogs], [convert_base_doc, convert_base_jupyter, convert_base_yml]):
         _convert_backlogs(
             _backlogs,
             _convert_func,

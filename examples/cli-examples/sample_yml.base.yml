@@ -1,0 +1,105 @@
+mmg:
+  lang_tags: [en-US, es-MX]
+  no_suffix: en-US
+
+title: Configuration Sample
+description: Sample YAML file for multilingual configuration
+
+metadata:
+  author: MMG Contributors
+  version: "1.0.0"
+  license: MIT
+
+application:
+  name: |
+    <!-- [en-US] -->
+    My Awesome App
+    <!-- [es-MX] -->
+    Mi Aplicación Increíble
+  
+  tagline: |
+    <!-- [en-US] -->
+    A powerful tool for multilingual content
+    <!-- [es-MX] -->
+    Una herramienta poderosa para contenido multilingüe
+  
+  features:
+    - name: Feature One
+      description: |
+        <!-- [en-US] -->
+        First amazing feature that helps with productivity
+        <!-- [es-MX] -->
+        Primera característica asombrosa que ayuda con la productividad
+    
+    - name: Feature Two
+      description: |
+        <!-- [en-US] -->
+        Second incredible feature for data management
+        <!-- [es-MX] -->
+        Segunda característica increíble para la gestión de datos
+    
+    - name: Feature Three
+      description: |
+        <!-- [en-US] -->
+        Third essential feature for integration support
+        <!-- [es-MX] -->
+        Tercera característica esencial para soporte de integración
+
+documentation:
+  welcome: |
+    <!-- [en-US] -->
+    Welcome to our documentation!
+    This guide will help you get started with our application.
+    <!-- [es-MX] -->
+    ¡Bienvenido a nuestra documentación!
+    Esta guía te ayudará a comenzar con nuestra aplicación.
+  
+  getting_started: |
+    <!-- [en-US] -->
+    # Getting Started
+    
+    1. Install the application
+    2. Configure your settings
+    3. Start using the features
+    <!-- [es-MX] -->
+    # Comenzar
+    
+    1. Instala la aplicación
+    2. Configura tu configuración
+    3. Comienza a usar las características
+  
+  requirements:
+    - Python 3.8 or higher
+    - pip package manager
+    - Internet connection for cloud features
+
+support:
+  contact_email: support@example.com
+  feedback: |
+    <!-- [en-US] -->
+    We appreciate your feedback! Please send us your suggestions and bug reports.
+    <!-- [es-MX] -->
+    ¡Apreciamos tus comentarios! Por favor envíanos tus sugerencias e informes de errores.
+  
+  faq:
+    - question: |
+        <!-- [en-US] -->
+        How do I install the application?
+        <!-- [es-MX] -->
+        ¿Cómo instalo la aplicación?
+      answer: |
+        <!-- [en-US] -->
+        Use the command: pip install awesome-app
+        <!-- [es-MX] -->
+        Usa el comando: pip install awesome-app
+    
+    - question: |
+        <!-- [en-US] -->
+        Is there a free version?
+        <!-- [es-MX] -->
+        ¿Hay una versión gratuita?
+      answer: |
+        <!-- [en-US] -->
+        Yes! The basic version is free and open source.
+        <!-- [es-MX] -->
+        ¡Sí! La versión básica es gratuita y de código abierto.

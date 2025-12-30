@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from typing import List, Optional, Final, Dict
+import yaml
 from mmg.exceptions import BadConfigError
 from mmg.utils import REGEX_PATTERN, flag_code_block_lines
 
@@ -78,4 +79,41 @@ def extract_config_from_jupyter(base_jn: Dict) -> Config:
     md_cells: List[str] = [cell["source"] for cell in base_jn["cells"] if cell["cell_type"] == "markdown"]
     md_cells = [line for cell in md_cells for line in cell]  # flatten
     cfg: Config = extract_config_from_md(md_cells)
+    return cfg
+
+
+def extract_config_from_yml(base_yml: Dict) -> Config:
+    """
+    Extract configuration from the base YAML dictionary.
+
+    Args:
+        base_yml (Dict): A YAML dictionary loaded from a base YAML file.
+
+    Raises:
+        BadConfigError: If the configuration is invalid.
+
+    Returns:
+        Config: A configuration extracted from the base YAML file.
+    """
+    cfg = Config()
+    
+    # Try to extract mmg config from the YAML
+    mmg_config = base_yml.get("mmg", {})
+    
+    if isinstance(mmg_config, dict):
+        if "lang_tags" in mmg_config:
+            if cfg.lang_tags:
+                raise BadConfigError("The configuration 'lang_tags' is already defined.")
+            lang_tags = mmg_config.get("lang_tags", [])
+            if isinstance(lang_tags, str):
+                lang_tags = lang_tags.replace(" ", "").split(",")
+            elif isinstance(lang_tags, list):
+                lang_tags = [str(tag).strip() for tag in lang_tags]
+            cfg.lang_tags = lang_tags
+        
+        if "no_suffix" in mmg_config:
+            if cfg.no_suffix:
+                raise BadConfigError("The configuration 'no_suffix' is already defined.")
+            cfg.no_suffix = str(mmg_config.get("no_suffix")).strip()
+    
     return cfg

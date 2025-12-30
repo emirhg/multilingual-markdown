@@ -116,6 +116,7 @@ def mmgcli(
     Supported extensions are: \n
         .md, .markdown, .mkd (Markdown) \n
         .ipynb (Jupyter Notebook) \n
+        .yml, .yaml (YAML) \n
         [experimental] .mdx (MDX - Markdown + JSX) \n
         [experimental] .rmd (R Markdown) \n
         [experimental] .mmd (MultiMarkdown) \n
@@ -124,6 +125,7 @@ def mmgcli(
     Here are some examples: \n
         mmg *.base.md \n
         mmg *.base.ipynb \n
+        mmg *.base.yml \n
         mmg *.base.md *.base.ipynb -o pdf --css github-dark \n
         mmg --recursive \n
         mmg --recursive --validation-only \n

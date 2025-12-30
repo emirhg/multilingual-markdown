@@ -4,7 +4,7 @@ import os
 import re
 
 # Compile regex pattern once at module level
-BASE_PATTERN = re.compile(r"[.]base[.](md|markdown|mkd|mdx|rmd|mmd|qmd|ipynb)$")
+BASE_PATTERN = re.compile(r"[.]base[.](md|markdown|mkd|mdx|rmd|mmd|qmd|ipynb|yml|yaml)$")
 
 
 @dataclass
