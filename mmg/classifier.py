@@ -37,7 +37,7 @@ class MarkdownClassifier:
                 #   * Switch the signal to the tag.
                 detected_tag = REGEX_PATTERN["tag"].search(line)
                 if detected_tag:
-                    signal = detected_tag.group(1) or detected_tag.group(2)
+                    signal = detected_tag.group(1)
                     # If the tag is <Unknown>, ignore it.
                     if (signal not in self.docs.keys()) and (signal != "common"):
                         signal = "ignore"

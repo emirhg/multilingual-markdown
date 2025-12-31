@@ -29,7 +29,7 @@ def _try_update_lang_tags(line: str, cfg: Config) -> Config:
     m = REGEX_PATTERN["lang_tags"].search(line)
     if m:
         _check_duplicate_config_value(cfg.lang_tags, "lang_tags")
-        lang_tags = m.group(2).replace(" ", "").split(",")
+        lang_tags = m.group(1).replace(" ", "").split(",")
         cfg.lang_tags = lang_tags
     return cfg
 
@@ -82,38 +82,31 @@ def extract_config_from_jupyter(base_jn: Dict) -> Config:
     return cfg
 
 
-def extract_config_from_yml(base_yml: Dict) -> Config:
+def extract_config_from_yml(raw_lines: List[str], base_yml: Dict = None) -> Config:
     """
-    Extract configuration from the base YAML dictionary.
+    Extract configuration from the base YAML file.
+    
+    Configuration is extracted from comments at the beginning of the YAML file.
+    This allows configuration to be independent of any YAML entry.
+    
+    Example:
+        # <!-- multilingual suffix: en-US, es-MX -->
+        # <!-- no suffix: en-US -->
+        
+        title: My App
+        version: "1.0.0"
 
     Args:
-        base_yml (Dict): A YAML dictionary loaded from a base YAML file.
+        raw_lines (List[str]): Raw lines from the YAML file (before parsing).
+        base_yml (Dict, optional): The parsed YAML dictionary (used as fallback).
 
     Raises:
         BadConfigError: If the configuration is invalid.
 
     Returns:
-        Config: A configuration extracted from the base YAML file.
+        Config: A configuration extracted from the YAML file.
     """
-    cfg = Config()
-    
-    # Try to extract mmg config from the YAML
-    mmg_config = base_yml.get("mmg", {})
-    
-    if isinstance(mmg_config, dict):
-        if "lang_tags" in mmg_config:
-            if cfg.lang_tags:
-                raise BadConfigError("The configuration 'lang_tags' is already defined.")
-            lang_tags = mmg_config.get("lang_tags", [])
-            if isinstance(lang_tags, str):
-                lang_tags = lang_tags.replace(" ", "").split(",")
-            elif isinstance(lang_tags, list):
-                lang_tags = [str(tag).strip() for tag in lang_tags]
-            cfg.lang_tags = lang_tags
-        
-        if "no_suffix" in mmg_config:
-            if cfg.no_suffix:
-                raise BadConfigError("The configuration 'no_suffix' is already defined.")
-            cfg.no_suffix = str(mmg_config.get("no_suffix")).strip()
+    # First, try to extract config from raw comment lines at the start of the file
+    cfg: Config = extract_config_from_md(raw_lines)
     
     return cfg

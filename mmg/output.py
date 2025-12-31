@@ -7,6 +7,11 @@ import nbconvert  # Jupyter Notebook to HTML
 import nbformat  # Dict to Jupyter Notebook
 from mmg.base_item import FileItem
 
+# Custom Dumper to prevent sorting dictionary keys
+class UnsortableDumper(yaml.SafeDumper):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.sort_keys = False
 
 def save_md(path, md_doc: List[str]):
     with open(path, "w", encoding="utf-8") as f:
@@ -20,7 +25,7 @@ def save_jn(path, jupyter_notebook: Dict):
 
 def save_yml(path, yml_doc: Dict):
     with open(path, "w", encoding="utf-8") as f:
-        yaml.dump(yml_doc, f, default_flow_style=False, allow_unicode=True)
+        yaml.dump(yml_doc, f, Dumper=UnsortableDumper, default_flow_style=False, allow_unicode=True)
 
 
 def save_html(path, html: str):

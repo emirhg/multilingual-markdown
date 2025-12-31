@@ -7,8 +7,8 @@ REGEX_PATTERN: Final[Dict[str, re.Pattern]] = {
     "comment": re.compile(r"(?:<!--.*-->|^\s*#\s*.*)"),
     "header": re.compile(r"^#+\s+"),
     # Config
-    "lang_tags": re.compile(r"(<!-- multilingual suffix:|# multilingual suffix:)\s*([\w\s,-]+)(?=\s--)"),
-    "no_suffix": re.compile(r"(?:<!-- no suffix:\s*([\w-]+)|# no suffix:\s*([\w-]+))"),
+    "lang_tags": re.compile(r"(?:<!-- multilingual suffix:|# multilingual suffix:)\s*([\w\s,-]+)"),
+    "no_suffix": re.compile(r"(?:<!-- no suffix:|# no suffix:)\s*([\w-]+)"),
     # Command
     "tag": re.compile(r"(?:<!--\s*\[\s*([\w-]+)\s*\]\s*-->|#\s*\[\s*([\w-]+)\s*\])"),
     # Table of Contents

@@ -60,13 +60,21 @@ def _process_file(item: FileItem) -> Tuple[FileItem, any, Config]:
             cfg: Config = extract_config_from_jupyter(base_jn)
             return (item, base_jn, cfg)
         elif item.extension in ["yml", "yaml"]:
+            # Read raw file content first to extract config from comments
+            f.seek(0)
+            raw_content: str = f.read()
+            raw_lines: List[str] = raw_content.splitlines()
+            
+            # Parse YAML
+            f.seek(0)
             base_yml: Dict = yaml.safe_load(f)
+            
             try:
-                cfg: Config = extract_config_from_yml(base_yml)
+                cfg: Config = extract_config_from_yml(raw_lines, base_yml)
             except BadConfigError as e:
                 log_error(f" => {repr(item)}: {e}")
                 sys.exit(1)
-            return (item, base_yml, cfg)
+            return (item, base_yml, cfg, raw_lines)
 
 
 def _health_check_on_backlogs(
@@ -77,13 +85,21 @@ def _health_check_on_backlogs(
     verbose: int,
 ) -> bool:
     all_healthy = True
-    for item, base, cfg in backlogs:
+    for backlog_item in backlogs:
+        if extension in ["yml", "yaml"] and len(backlog_item) == 4:
+            item, base, cfg, raw_lines = backlog_item
+        else:
+            item, base, cfg = backlog_item[:3]
+        
         if skip_validation:
             log_info(f" {emoji} {repr(item)}")
         else:
             # Health check
             hc = HealthChecker()
-            hc.health_check(base, cfg=cfg, extension=extension)
+            if extension in ["yml", "yaml"]:
+                hc.health_check(base, cfg=cfg, extension=extension, raw_lines=raw_lines)
+            else:
+                hc.health_check(base, cfg=cfg, extension=extension)
             if not hc.is_healthy:
                 all_healthy = False
             # Print log
@@ -130,6 +146,7 @@ def _convert_backlogs(
     css: str,
     preamble: bool,
     preamble_text: str,
+    extension: str,
     source_dir: str = ".",
     output_dir: str = ".",
     tag_as: str = "suffix",
@@ -140,19 +157,21 @@ def _convert_backlogs(
 
     # Markdown backlogs: List of (item: FileItem, base_doc: List[str], cfg: Config)
     # Jupyter notebook backlogs: List of (item: FileItem, base_jn: Dict, cfg: Config)
-    for base_item, base, cfg in backlogs:
-        no_suffix: str = cfg.no_suffix
-        # When `tag_as`` is "suffix", `no_suffix` will remove the suffix from the file name.
-        #   e.g. If no_suffix = "en-US" then
-        #       ${source_dir}/file.en-US.md => ${output_dir}/file.md
-        #       ${source_dir}/file.fr-FR.md => ${output_dir}/file.fr-FR.md
-        #
-        # When `tag_as` is "folder", `no_suffix` will omit the folder from the file path.
-        #   e.g. If no_suffix = "en-US" then
-        #       ${source_dir}/file.en-US.md => ${output_dir}/file.md
-        #       ${source_dir}/file.fr-FR.md => ${output_dir}/fr-FR/file.md
+    for backlog_item in backlogs:
+        # Determine how to unpack backlog items based on extension
+        if extension in ["yml", "yaml"]:
+            base_item, base, cfg, raw_lines = backlog_item
+        else:
+            base_item, base, cfg = backlog_item
+            raw_lines = None # Ensure raw_lines is defined for non-yml types, though not used
 
-        target_docs = convert_func(base, skip_health_check=True)
+        no_suffix: str = cfg.no_suffix # Ensure no_suffix is always defined after cfg is unpacked.
+
+        # Modify the call to convert_func to pass raw_lines for yml
+        if extension in ["yml", "yaml"]:
+            target_docs = convert_func(base, cfg=cfg, skip_health_check=True, raw_lines=raw_lines)
+        else:
+            target_docs = convert_func(base, cfg=cfg, skip_health_check=True)
         # taget_docs: Dict of (key: lang, value: content)
         #   lang: str (e.g. "en-US")
         #   content: List[str] (for markdown) or Dict (for jupyter notebook)
@@ -188,6 +207,8 @@ def _convert_backlogs(
             os.makedirs(save_dir, exist_ok=True)
 
             # Save
+            print(f"output_format: {output_format}")
+            print(f"extension: {extension}")
             if output_format == "as-is":
                 target_item = FileItem(save_path, base_item.extension)
                 output.handle_as_is(target_item, content)
@@ -212,6 +233,7 @@ def convert_cli_args(
     preamble: bool,
     preamble_text: str,
 ):
+    print("convert_cli_args entered")
     # Get base files
     base_items = collect_bases_from_files(file_names)
     if recursive:
@@ -321,6 +343,7 @@ def _convert_items(
     output_dir: str = ".",
     tag_as: str = "suffix",
 ):
+    print("_convert_items entered")
     if not base_items:
         raise click.UsageError("No base files found.")
     base_count = len(base_items)
@@ -369,7 +392,7 @@ def _convert_items(
     # Convert
     # ^^^^^^^
     log_info("----------------------", fg="cyan")
-    for _backlogs, _convert_func in zip([md_backlogs, jn_backlogs, yml_backlogs], [convert_base_doc, convert_base_jupyter, convert_base_yml]):
+    for _backlogs, _convert_func, _ext in zip([md_backlogs, jn_backlogs, yml_backlogs], [convert_base_doc, convert_base_jupyter, convert_base_yml], ["md", "ipynb", "yml"]):
         _convert_backlogs(
             _backlogs,
             _convert_func,
@@ -377,6 +400,7 @@ def _convert_items(
             css,
             preamble,
             preamble_text,
+            _ext,
             source_dir=source_dir,
             output_dir=output_dir,
             tag_as=tag_as,

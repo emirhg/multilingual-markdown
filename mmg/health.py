@@ -85,13 +85,14 @@ class HealthChecker:
                 self._error.append(f"Config: no_suffix '{cfg.no_suffix}' is not in lang_tags.")
                 self._status = HealthStatus.UNHEALTHY
 
-    def health_check(self, base: any, cfg: Config = None, extension: str = "md") -> HealthStatus:
+    def health_check(self, base: any, cfg: Config = None, extension: str = "md", raw_lines: List[str] = None) -> HealthStatus:
         """Check the health based on the current config.
 
         Args:
             base (any): The base file to check. Markdown(List[str]) or Jupyter(Dict) or YAML(Dict).
             cfg (Config, optional): The config to check. If not given, the config will be extracted from the base.
-            extension (str, optional): The extension of the base file. "md", "ipynb" or "yml". Defaults to "md".
+            extension (str, optional): The extension of the a base file. "md", "ipynb" or "yml". Defaults to "md".
+            raw_lines (List[str], optional): The raw lines of the base file. Only for yml. Defaults to None.
 
         Returns:
             HealthStatus: The health status. (HEALTHY, UNHEALTHY, NOT_CHECKED)
@@ -104,7 +105,7 @@ class HealthChecker:
         elif extension == "ipynb":
             self._health_check_jupyter(base, cfg)
         elif extension == "yml":
-            self._health_check_yml(base, cfg)
+            self._health_check_yml(base, cfg, raw_lines=raw_lines)
         # If no tag detected, it is unhealthy.
         if not self._tag_count:
             self._error.append("No tag detected.")
@@ -156,9 +157,9 @@ class HealthChecker:
         self._error.extend([_header(indexing[line_num - 1]) + message for line_num, message in dc.error_messages])
         self._warning.extend([_header(indexing[line_num - 1]) + message for line_num, message in dc.warning_messages])
 
-    def _health_check_yml(self, base_yml: Dict, cfg: Config = None):
+    def _health_check_yml(self, base_yml: Dict, cfg: Config = None, raw_lines: List[str] = None):
         # Check the config
-        cfg: Config = cfg if cfg else extract_config_from_yml(base_yml)
+        cfg: Config = cfg if cfg else extract_config_from_yml(raw_lines, base_yml)
         self._check_config(cfg)
         # Convert YAML to lines (flatten all string values)
         def flatten_yaml_to_lines(obj):
@@ -229,8 +230,7 @@ class DocChecker:
             # Normal tags
             detected_tag = REGEX_PATTERN["tag"].search(line)
             if detected_tag:
-                # Find "<!-- [A] -->" or "#[A]" and extract the tag "A".
-                tag = detected_tag.group(1) or detected_tag.group(2)
+                tag = detected_tag.group(1)
                 looks_good = self._push(tag, line_num + 1)  # The line number starts from 1.
                 if not looks_good:
                     self._status = HealthStatus.UNHEALTHY

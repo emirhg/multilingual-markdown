@@ -168,6 +168,7 @@ def convert_base_yml(
     print_log: bool = False,
     file_name: str = None,
     verbosity: int = 0,
+    raw_lines: List[str] = None,
 ) -> Dict[str, Dict]:
     """Split the base YAML into multiple YAMLs based on the config.
 
@@ -179,10 +180,8 @@ def convert_base_yml(
         force_convert (bool, optional): If True, ignore the health check result and force to convert.
             This option is not working when `skip_health_check` is True. Defaults to False.
         print_log (bool, optional): If True, print the log.
-            This option is not working when `skip_health_check` is True. Defaults to False.
-        file_name (str, optional): The file name to show in the log.
             This option is not working when `print_log` is False. Defaults to None.
-        verbosity (int, optional): The verbosity level from 0 to 2.
+        file_name (str, optional): The file name to show in the log.
             This option is not working when `print_log` is False. Defaults to 0.
 
     Raises:
@@ -194,7 +193,9 @@ def convert_base_yml(
     import copy
     
     # Extract config
-    cfg: Config = cfg if cfg else extract_config_from_yml(base_yml)
+    if raw_lines is None:
+        raw_lines = []
+    cfg: Config = cfg if cfg else extract_config_from_yml(raw_lines, base_yml)
 
     # Health check
     _health_check(
@@ -206,6 +207,7 @@ def convert_base_yml(
         print_log=print_log,
         file_name=file_name,
         verbosity=verbosity,
+        raw_lines=raw_lines,
     )
 
     # Helper function to recursively process and classify YAML values
@@ -264,10 +266,11 @@ def _health_check(
     print_log: bool,
     file_name: str,
     verbosity: int,
+    raw_lines: List[str] = None,
 ):
     if not skip_health_check:
         hc = HealthChecker()
-        status: HealthStatus = hc.health_check(base, cfg=cfg, extension=extension)
+        status: HealthStatus = hc.health_check(base, cfg=cfg, extension=extension, raw_lines=raw_lines)
         if print_log:
             log = hc.cli_log(file_name=file_name, verbosity=verbosity)
             print("\n".join(log))
