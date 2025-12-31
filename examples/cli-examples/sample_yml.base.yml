@@ -1,6 +1,5 @@
-mmg:
-  lang_tags: [en-US, es-MX]
-  no_suffix: en-US
+# multilingual suffix: en-US, es-MX
+# no suffix: en-US
 
 title: Configuration Sample
 description: Sample YAML file for multilingual configuration
